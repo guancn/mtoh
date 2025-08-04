@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漠河-内蒙古边境自驾探险之旅 | 交互式行程单</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.29.1.min.js" charset="utf-8"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 50vh;
+            }
+        }
+        .stat-card {
+            background-color: #003f5c;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #ffa600;
+        }
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            color: #e2e8f0;
+        }
+        .flowchart-container {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #ff7c43 #003f5c;
+        }
+        .flowchart-step {
+            flex: 0 0 280px;
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-right: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            border-top: 4px solid #f95d6a;
+        }
+        .flowchart-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff7c43;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-right: 1.5rem;
+        }
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="infoModal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-auto transform transition-transform duration-300 scale-95">
+            <div id="modalContent" class="p-6">
+            </div>
+            <div class="bg-gray-100 px-6 py-3 text-right">
+                <button onclick="closeModal()" class="bg-[#f95d6a] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#d45087] transition-colors">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-[#003f5c] text-white text-center py-12 px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">漠河-内蒙古边境自驾探险之旅</h1>
+        <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">一份为期7天的交互式行程单，带您穿越中国北境的壮丽风光</p>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="overview" class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-[#003f5c]">旅程速览</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="stat-card">
+                    <span class="stat-number">1433</span>
+                    <span class="stat-label">总里程 (公里)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">7天6夜</span>
+                    <span class="stat-label">行程时长</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">3</span>
+                    <span class="stat-label">核心区域 (漠河, 大兴安岭, 呼伦贝尔)</span>
+                </div>
+            </div>
+        </section>
+        
+        <section id="interactive-map" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-12">
+            <h2 class="text-3xl font-bold text-center mb-2 text-[#003f5c]">交互式路线图</h2>
+            <p class="text-center text-gray-600 mb-6">点击地图上的站点，查看详细信息、天气和距离。</p>
+            <div id="map-plot" class="w-full h-[60vh] md:h-[70vh]"></div>
+            <div class="text-center mt-6">
+                <a id="baiduMapLink" href="#" target="_blank" class="inline-block bg-[#f95d6a] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#d45087] transition-colors shadow-md">在百度地图上查看总路线</a>
+            </div>
+        </section>
+
+        <section id="journey-flow" class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-[#003f5c]">行程全景</h2>
+            <div class="flowchart-container">
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 1: 抵达漠河</h3>
+                    <p class="text-sm text-gray-600 mt-2">航班于17:05降落，办理租车后入住市区，为北境探险养精蓄锐。</p>
+                    <p class="text-sm mt-2">🚗 13 km | 🏨 漠河市区</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 2: 探寻最北</h3>
+                    <p class="text-sm text-gray-600 mt-2">游览北极村、驯鹿园、龙江第一湾、乌苏里浅滩，最终抵达原始的北红村。</p>
+                    <p class="text-sm mt-2">🚗 230 km | 🏡 北红村火炕</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 3: 穿越林海</h3>
+                    <p class="text-sm text-gray-600 mt-2">从北红村南下，穿越大兴安岭腹地，抵达“中国冷极”根河。</p>
+                    <p class="text-sm mt-2">🚗 300 km | 🏨 根河市</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 4: 湿地与风情</h3>
+                    <p class="text-sm text-gray-600 mt-2">观赏额尔古纳湿地，体验恩和俄罗斯民族乡的异域文化。</p>
+                    <p class="text-sm mt-2">🚗 150 km | 🏡 恩和木刻楞</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                 <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 5: 边境之路</h3>
+                    <p class="text-sm text-gray-600 mt-2">从恩和出发，途经室韦感受中俄界河风光，驰骋草原公路，抵达满洲里。</p>
+                    <p class="text-sm mt-2">🚗 334 km | 🏨 满洲里</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 6: 草原明珠</h3>
+                    <p class="text-sm text-gray-600 mt-2">探索满洲里套娃广场与国门，深度体验呼伦贝尔草原的辽阔。</p>
+                    <p class="text-sm mt-2">🚗 ~100 km | 🛖 蒙古包 (可选)</p>
+                </div>
+                <div class="flowchart-arrow">→</div>
+                <div class="flowchart-step">
+                    <h3 class="font-bold text-lg text-[#003f5c]">Day 7: 告别草原</h3>
+                    <p class="text-sm text-gray-600 mt-2">欣赏莫尔格勒河“天下第一曲水”，下午17:35于海拉尔返程。</p>
+                    <p class="text-sm mt-2">🚗 200 km | ✈️ 海拉尔</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-visuals" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <h3 class="text-2xl font-bold text-center mb-4 text-[#003f5c]">每日驾驶强度对比</h3>
+                <p class="text-center text-gray-600 mb-4">直观了解每日的行车负担，合理分配体力。</p>
+                <div class="chart-container">
+                    <canvas id="dailyDistanceChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <h3 class="text-2xl font-bold text-center mb-4 text-[#003f5c]">住宿体验分布</h3>
+                <p class="text-center text-gray-600 mb-4">本次旅程将体验多种特色住宿。</p>
+                <div class="chart-container">
+                    <canvas id="accommodationTypeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="preparation" class="bg-white rounded-lg shadow-md p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-center mb-8 text-[#003f5c]">行前准备清单</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">🧥</div>
+                    <h4 class="font-bold">分层衣物</h4>
+                    <p class="text-sm text-gray-600">冲锋衣、抓绒内胆应对巨大温差。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">☀️</div>
+                    <h4 class="font-bold">防晒用品</h4>
+                    <p class="text-sm text-gray-600">高倍防晒霜、墨镜、遮阳帽。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">🦟</div>
+                    <h4 class="font-bold">驱蚊防虫</h4>
+                    <p class="text-sm text-gray-600">林区和草原蚊虫较多。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">🗺️</div>
+                    <h4 class="font-bold">离线地图</h4>
+                    <p class="text-sm text-gray-600">林区信号弱，导航必备。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">🆔</div>
+                    <h4 class="font-bold">重要证件</h4>
+                    <p class="text-sm text-gray-600">身份证、驾驶证随身携带。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">💊</div>
+                    <h4 class="font-bold">常备药品</h4>
+                    <p class="text-sm text-gray-600">感冒药、肠胃药、创可贴等。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2">📷</div>
+                    <h4 class="font-bold">摄影器材</h4>
+                    <p class="text-sm text-gray-600">记录壮美风光，备足电池。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-4xl mb-2"> snacks </div>
+                    <h4 class="font-bold">能量补给</h4>
+                    <p class="text-sm text-gray-600">长途驾驶，准备零食和水。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-6 bg-[#003f5c] text-gray-300 mt-12">
+        <p>祝您有一段难忘的北境探险之旅！</p>
+    </footer>
+
+    <script>
+        const tripData = [
+            { day: 1, name: '漠河市', x: 0.5, y: 9.5, weather: '5-18°C, 晴间多云', nextStop: '北红村', distance: 230, details: '航班于17:05抵达。当晚入住市区，为次日行程做准备。' },
+            { day: 2, name: '北红村', x: 1.5, y: 8.5, weather: '4-17°C, 晴朗', nextStop: '根河市', distance: 300, details: '探访中国最北的原始村庄，体验火炕民俗，观赏界江日落和璀璨星空。' },
+            { day: 3, name: '根河市', x: 2.5, y: 6.5, weather: '6-19°C, 多云', nextStop: '恩和乡', distance: 150, details: '抵达“中国冷极”，参观根河湿地，感受大兴安岭的生态之美。' },
+            { day: 4, name: '恩和乡', x: 3.5, y: 5.0, weather: '8-20°C, 晴', nextStop: '满洲里', distance: 334, details: '沉浸在俄罗斯民族乡的独特风情中，品尝俄式美食，欣赏木刻楞建筑。' },
+            { day: 5, name: '满洲里', x: 6.0, y: 3.5, weather: '10-22°C, 晴朗', nextStop: '满洲里/草原', distance: '~100', details: '从恩和出发，途经室韦感受中俄边境风光，最终抵达中俄蒙三国交界的口岸城市。' },
+            { day: 6, name: '满洲里', x: 5.0, y: 2.0, weather: '10-22°C, 晴朗', nextStop: '海拉尔', distance: 200, details: '探索套娃广场与国门，深度体验呼伦贝尔草原的辽阔。' },
+            { day: 7, name: '海拉尔', x: 7.0, y: 1.0, weather: '9-21°C, 多云转晴', nextStop: '返程', distance: 0, details: '欣赏莫尔格勒河“天下第一曲水”后，从海拉尔机场返程，结束旅途。' }
+        ];
+
+        const poiData = [
+            { name: '室韦', x: 4.5, y: 5.5, day: 5, details: '中俄边境风情，漫步额尔古纳河畔，感受中俄文化交融。' }
+        ];
+
+        function openModal(data) {
+            const modal = document.getElementById('infoModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <h3 class="text-2xl font-bold text-[#003f5c] mb-4">${data.name} (Day ${data.day})</h3>
+                <p class="text-gray-700 mb-2"><strong class="font-semibold">天气参考:</strong> ${data.weather || '未提供'}</p>
+                <p class="text-gray-700 mb-2"><strong class="font-semibold">下一站:</strong> ${data.nextStop || '无'}</p>
+                <p class="text-gray-700 mb-4"><strong class="font-semibold">至下一站距离:</strong> ${data.distance} km</p>
+                <p class="text-gray-600 bg-gray-100 p-3 rounded-md">${data.details}</p>
+            `;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('div > div:first-child').classList.remove('scale-95');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div > div:first-child').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('pointer-events-none');
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const wrapLabel = (label) => {
+                const maxLen = 16;
+                if (label.length <= maxLen) return label;
+                const words = label.split(' ');
+                let currentLine = '';
+                const lines = [];
+                words.forEach(word => {
+                    if ((currentLine + ' ' + word).trim().length > maxLen) {
+                        lines.push(currentLine.trim());
+                        currentLine = word;
+                    } else {
+                        currentLine = (currentLine + ' ' + word).trim();
+                    }
+                });
+                lines.push(currentLine.trim());
+                return lines;
+            };
+            
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                }
+                return label;
+            };
+            
+            const colorPalette = ['#003f5c', '#665191', '#d45087', '#ff7c43', '#ffa600', '#a05195', '#f95d6a'];
+
+            new Chart(document.getElementById('dailyDistanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    datasets: [{
+                        label: '驾驶里程 (km)',
+                        data: [13, 230, 300, 150, 334, 100, 200],
+                        backgroundColor: colorPalette,
+                        borderColor: colorPalette.map(c => c + 'B3'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: { title: tooltipTitleCallback }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('accommodationTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['酒店', '火炕民宿', '木刻楞民宿', '蒙古包(可选)'],
+                    datasets: [{
+                        label: '住宿晚数',
+                        data: [3, 1, 1, 1],
+                        backgroundColor: ['#003f5c', '#a05195', '#ff7c43', '#ffa600'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: { title: tooltipTitleCallback }
+                        }
+                    }
+                }
+            });
+            
+            const mapPlotElement = document.getElementById('map-plot');
+
+            const plotTraces = [
+                { // Main trip points (overnight stays)
+                    type: 'scattergl',
+                    mode: 'markers+text',
+                    x: tripData.map(p => p.x),
+                    y: tripData.map(p => p.y),
+                    text: tripData.map(p => p.name),
+                    textposition: 'top center',
+                    textfont: {
+                        family: 'Inter, Noto Sans SC, sans-serif',
+                        size: 14,
+                        color: '#003f5c',
+                        weight: 'bold'
+                    },
+                    marker: {
+                        size: 20,
+                        color: '#ff7c43',
+                        symbol: 'circle',
+                        line: {
+                            color: 'white',
+                            width: 2
+                        }
+                    },
+                    hoverinfo: 'text',
+                    customdata: tripData
+                },
+                { // Connecting lines for the main trip
+                    type: 'scattergl',
+                    mode: 'lines',
+                    x: tripData.map(p => p.x),
+                    y: tripData.map(p => p.y),
+                    line: {
+                        color: '#665191',
+                        width: 3,
+                        dash: 'dash'
+                    },
+                    hoverinfo: 'none'
+                },
+                { // Points of Interest (like Shiwei)
+                    type: 'scattergl',
+                    mode: 'markers+text',
+                    x: poiData.map(p => p.x),
+                    y: poiData.map(p => p.y),
+                    text: poiData.map(p => p.name),
+                    textposition: 'bottom center',
+                    textfont: {
+                        family: 'Inter, Noto Sans SC, sans-serif',
+                        size: 12,
+                        color: '#d45087',
+                        weight: 'bold'
+                    },
+                    marker: {
+                        size: 15,
+                        color: '#d45087',
+                        symbol: 'star',
+                        line: {
+                            color: 'white',
+                            width: 1
+                        }
+                    },
+                    hoverinfo: 'text',
+                    customdata: poiData
+                }
+            ];
+
+            const mapLayout = {
+                title: {
+                    text: '漠河至海拉尔路线示意图',
+                    font: {
+                        size: 20,
+                        color: '#003f5c',
+                        family: 'Inter, Noto Sans SC, sans-serif',
+                        weight: 'bold'
+                    }
+                },
+                showlegend: false,
+                xaxis: {
+                    showgrid: false,
+                    zeroline: false,
+                    visible: false,
+                    range: [-1, 8]
+                },
+                yaxis: {
+                    showgrid: false,
+                    zeroline: false,
+                    visible: false,
+                    range: [0, 11]
+                },
+                plot_bgcolor: 'rgba(240, 244, 248, 0.8)',
+                paper_bgcolor: '#ffffff',
+                margin: { l: 20, r: 20, t: 60, b: 20 },
+                autosize: true
+            };
+
+            const mapConfig = {
+                responsive: true,
+                displayModeBar: false
+            };
+
+            Plotly.newPlot(mapPlotElement, plotTraces, mapLayout, mapConfig);
+
+            mapPlotElement.on('plotly_click', (data) => {
+                if(data.points.length > 0) {
+                    const pointData = data.points[0].customdata;
+                    // Check if it's from tripData or poiData
+                    if (Array.isArray(pointData)) { // It's from tripData
+                        openModal(pointData[0]); // Take the first item if it's an array of customdata
+                    } else { // It's from poiData
+                        openModal(pointData);
+                    }
+                }
+            });
+
+            // Generate Baidu Map Link
+            const baiduMapLink = document.getElementById('baiduMapLink');
+            const originCity = '漠河市';
+            const destinationCity = '海拉尔';
+            const baiduUrl = `http://api.map.baidu.com/direction?origin=${originCity}&destination=${destinationCity}&mode=driving&region=中国&output=html&src=漠河内蒙自驾游`;
+            baiduMapLink.href = baiduUrl;
+        });
+    </script>
+</body>
+</html>
