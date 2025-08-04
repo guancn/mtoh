@@ -253,29 +253,36 @@
 
     <script>
         const tripData = [
-            { day: 1, name: '漠河市', x: 0.5, y: 9.5, weather: '5-18°C, 晴间多云', nextStop: '北红村', distance: 230, details: '航班于17:05抵达。当晚入住市区，为次日行程做准备。' },
-            { day: 2, name: '北红村', x: 1.5, y: 8.5, weather: '4-17°C, 晴朗', nextStop: '根河市', distance: 300, details: '探访中国最北的原始村庄，体验火炕民俗，观赏界江日落和璀璨星空。' },
-            { day: 3, name: '根河市', x: 2.5, y: 6.5, weather: '6-19°C, 多云', nextStop: '恩和乡', distance: 150, details: '抵达“中国冷极”，参观根河湿地，感受大兴安岭的生态之美。' },
-            { day: 4, name: '恩和乡', x: 3.5, y: 5.0, weather: '8-20°C, 晴', nextStop: '满洲里', distance: 334, details: '沉浸在俄罗斯民族乡的独特风情中，品尝俄式美食，欣赏木刻楞建筑。' },
-            { day: 5, name: '满洲里', x: 6.0, y: 3.5, weather: '10-22°C, 晴朗', nextStop: '满洲里/草原', distance: '~100', details: '从恩和出发，途经室韦感受中俄边境风光，最终抵达中俄蒙三国交界的口岸城市。' },
-            { day: 6, name: '满洲里', x: 5.0, y: 2.0, weather: '10-22°C, 晴朗', nextStop: '海拉尔', distance: 200, details: '探索套娃广场与国门，深度体验呼伦贝尔草原的辽阔。' },
-            { day: 7, name: '海拉尔', x: 7.0, y: 1.0, weather: '9-21°C, 多云转晴', nextStop: '返程', distance: 0, details: '欣赏莫尔格勒河“天下第一曲水”后，从海拉尔机场返程，结束旅途。' }
+            { day: 1, name: '漠河市', x: 0.5, y: 9.5, weather: '5-18°C, 晴间多云', nextStop: '北红村', distance: 230, details: '航班于17:05抵达。当晚入住市区，为次日行程做准备。', lat: 52.9667, lon: 122.5000 },
+            { day: 2, name: '北红村', x: 1.5, y: 8.5, weather: '4-17°C, 晴朗', nextStop: '根河市', distance: 300, details: '探访中国最北的原始村庄，体验火炕民俗，观赏界江日落和璀璨星空。', lat: 53.6800, lon: 123.3600 },
+            { day: 3, name: '根河市', x: 2.5, y: 6.5, weather: '6-19°C, 多云', nextStop: '恩和乡', distance: 150, details: '抵达“中国冷极”，参观根河湿地，感受大兴安岭的生态之美。', lat: 50.7800, lon: 121.5100 },
+            { day: 4, name: '恩和乡', x: 3.5, y: 5.0, weather: '8-20°C, 晴', nextStop: '满洲里', distance: 334, details: '沉浸在俄罗斯民族乡的独特风情中，品尝俄式美食，欣赏木刻楞建筑。', lat: 51.0400, lon: 119.8600 },
+            { day: 5, name: '满洲里', x: 6.0, y: 3.5, weather: '10-22°C, 晴朗', nextStop: '满洲里/草原', distance: '~100', details: '从恩和出发，途经室韦感受中俄边境风光，最终抵达中俄蒙三国交界的口岸城市。', lat: 49.6000, lon: 117.3800 },
+            { day: 6, name: '满洲里', x: 5.0, y: 2.0, weather: '10-22°C, 晴朗', nextStop: '海拉尔', distance: 200, details: '探索套娃广场与国门，深度体验呼伦贝尔草原的辽阔。', lat: 49.6000, lon: 117.3800 },
+            { day: 7, name: '海拉尔', x: 7.0, y: 1.0, weather: '9-21°C, 多云转晴', nextStop: '返程', distance: 0, details: '欣赏莫尔格勒河“天下第一曲水”后，从海拉尔机场返程，结束旅途。', lat: 49.2000, lon: 119.7500 }
         ];
 
         const poiData = [
-            { name: '室韦', x: 4.5, y: 5.5, day: 5, details: '中俄边境风情，漫步额尔古纳河畔，感受中俄文化交融。' }
+            { name: '室韦', x: 4.5, y: 5.5, day: 5, details: '中俄边境风情，漫步额尔古纳河畔，感受中俄文化交融。', lat: 51.3400, lon: 119.9700 }
         ];
 
         function openModal(data) {
             const modal = document.getElementById('infoModal');
             const modalContent = document.getElementById('modalContent');
             
+            let baiduMapButton = '';
+            if (data.lat && data.lon) {
+                const baiduMapUrl = `http://api.map.baidu.com/marker?location=${data.lat},${data.lon}&title=${data.name}&content=${data.name}详细信息&output=html&src=漠河内蒙自驾游`;
+                baiduMapButton = `<a href="${baiduMapUrl}" target="_blank" class="block w-full text-center bg-[#003f5c] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#665191] transition-colors mt-4">在百度地图上查看</a>`;
+            }
+
             modalContent.innerHTML = `
-                <h3 class="text-2xl font-bold text-[#003f5c] mb-4">${data.name} (Day ${data.day})</h3>
+                <h3 class="text-2xl font-bold text-[#003f5c] mb-4">${data.name} (Day ${data.day || 'N/A'})</h3>
                 <p class="text-gray-700 mb-2"><strong class="font-semibold">天气参考:</strong> ${data.weather || '未提供'}</p>
                 <p class="text-gray-700 mb-2"><strong class="font-semibold">下一站:</strong> ${data.nextStop || '无'}</p>
                 <p class="text-gray-700 mb-4"><strong class="font-semibold">至下一站距离:</strong> ${data.distance} km</p>
                 <p class="text-gray-600 bg-gray-100 p-3 rounded-md">${data.details}</p>
+                ${baiduMapButton}
             `;
 
             modal.classList.remove('opacity-0', 'pointer-events-none');
